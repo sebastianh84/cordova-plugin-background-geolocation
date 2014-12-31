@@ -51,15 +51,12 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
         Boolean result = false;
         updateServiceIntent = new Intent(activity, LocationUpdateService.class);
 
-        this.callback = callbackContext;
-        
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
             result = true;
             if (params == null || headers == null || url == null) {
                 callbackContext.error("Call configure before calling start");
             } else {
                 // callbackContext.success();
-
 
                 updateServiceIntent.putExtra("url", url);
                 updateServiceIntent.putExtra("params", params);
@@ -100,6 +97,7 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
                 this.notificationTitle = data.getString(8);
                 this.notificationText = data.getString(9);
                 this.stopOnTerminate = data.getString(11);
+                this.callback = callbackContext;
             } catch (JSONException e) {
                 callbackContext.error("authToken/url required as parameters: " + e.getMessage());
             }
@@ -128,6 +126,8 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
         Log.d("BUS received : ",loc.toString());
         PluginResult result = new PluginResult(PluginResult.Status.OK, loc);
         result.setKeepCallback(true);
-        callback.sendPluginResult(result);
+        if(callback != null){
+            callback.sendPluginResult(result);    
+        }
     }
 }
