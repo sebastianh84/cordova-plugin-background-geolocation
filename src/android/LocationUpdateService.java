@@ -414,14 +414,27 @@ public class LocationUpdateService extends Service implements LocationListener {
         }
         // Go ahead and cache, push to server
         lastLocation = location;
+
+        // NOTE - we do not want to store the location nor post it to server
+        // instead send it via bus to activity
+        JSONObject loc = new JSONObject();
+            loc.put("latitude", location.getLatitude());
+            loc.put("longitude", location.getLongitude());
+            loc.put("accuracy", location.getAccuracy());
+            loc.put("speed", location.getSpeed());
+            loc.put("bearing", location.getBearing());
+            loc.put("altitude", location.getAltitude());
+            loc.put("recorded_at", location.getRecordedAt());
+        EventBus.getDefault().post(loc);
+
         // persistLocation(location);
 
-        if (this.isNetworkConnected()) {
-            Log.d(TAG, "Scheduling location network post");
-            schedulePostLocations();
-        } else {
-            Log.d(TAG, "Network unavailable, waiting for now");
-        }
+        // if (this.isNetworkConnected()) {
+        //     Log.d(TAG, "Scheduling location network post");
+        //     schedulePostLocations();
+        // } else {
+        //     Log.d(TAG, "Network unavailable, waiting for now");
+        // }
     }
 
     /**
@@ -661,8 +674,8 @@ public class LocationUpdateService extends Service implements LocationListener {
         try {
             lastUpdateTime = SystemClock.elapsedRealtime();
             Log.i(TAG, "Posting  native location update: " + l);
-            // DefaultHttpClient httpClient = new DefaultHttpClient();
-            // HttpPost request = new HttpPost(url);
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpPost request = new HttpPost(url);
 
             JSONObject location = new JSONObject();
             location.put("latitude", l.getLatitude());
@@ -679,28 +692,27 @@ public class LocationUpdateService extends Service implements LocationListener {
 
             Log.i(TAG, "location: " + location.toString());
 
-            // StringEntity se = new StringEntity(params.toString());
-            // request.setEntity(se);
-            // request.setHeader("Accept", "application/json");
-            // request.setHeader("Content-type", "application/json");
+            StringEntity se = new StringEntity(params.toString());
+            request.setEntity(se);
+            request.setHeader("Accept", "application/json");
+            request.setHeader("Content-type", "application/json");
 
-            // Iterator<String> headkeys = headers.keys();
-            // while( headkeys.hasNext() ){
-        // String headkey = headkeys.next();
-        // if(headkey != null) {
-                    // Log.d(TAG, "Adding Header: " + headkey + " : " + (String)headers.getString(headkey));
-                    // request.setHeader(headkey, (String)headers.getString(headkey));
-        // }
-            // }
-            // Log.d(TAG, "Posting to " + request.getURI().toString());
-            // HttpResponse response = httpClient.execute(request);
-            // Log.i(TAG, "Response received: " + response.getStatusLine());
-            // if (response.getStatusLine().getStatusCode() == 200) {
-                // return true;
-            // } else {
-                // return false;
-            // }
-            return true;
+            Iterator<String> headkeys = headers.keys();
+            while( headkeys.hasNext() ){
+        String headkey = headkeys.next();
+        if(headkey != null) {
+                    Log.d(TAG, "Adding Header: " + headkey + " : " + (String)headers.getString(headkey));
+                    request.setHeader(headkey, (String)headers.getString(headkey));
+        }
+            }
+            Log.d(TAG, "Posting to " + request.getURI().toString());
+            HttpResponse response = httpClient.execute(request);
+            Log.i(TAG, "Response received: " + response.getStatusLine());
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return true;
+            } else {
+                return false;
+            }
         } catch (Throwable e) {
             Log.w(TAG, "Exception posting location: " + e);
             e.printStackTrace();
