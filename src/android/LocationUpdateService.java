@@ -700,6 +700,7 @@ public class LocationUpdateService extends Service implements LocationListener {
             // } else {
                 // return false;
             // }
+            return true;
         } catch (Throwable e) {
             Log.w(TAG, "Exception posting location: " + e);
             e.printStackTrace();
