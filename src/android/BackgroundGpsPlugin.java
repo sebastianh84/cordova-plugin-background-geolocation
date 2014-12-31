@@ -5,6 +5,9 @@ import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import de.greenrobot.event.EventBus;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +37,12 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
     private String notificationTitle = "Background tracking";
     private String notificationText = "ENABLED";
     private String stopOnTerminate = "false";
+
+    @Override
+    protected void pluginInitialize() {
+        Log.d("BUS","registering");
+        EventBus.getDefault().register(this);
+    }
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
         Activity activity = this.cordova.getActivity();
@@ -106,5 +115,9 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
         if(isEnabled && stopOnTerminate.equalsIgnoreCase("true")) {
             activity.stopService(updateServiceIntent);
         }
+    }
+
+    public void onEventMainThread(JSONObject loc){
+        Log.d("BUS",loc.toString());
     }
 }

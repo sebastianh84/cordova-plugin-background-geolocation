@@ -1,5 +1,7 @@
 package com.tenforwardconsulting.cordova.bgloc;
 
+import de.greenrobot.event.EventBus;
+
 import java.util.List;
 import java.util.Iterator;
 
@@ -670,6 +672,9 @@ public class LocationUpdateService extends Service implements LocationListener {
             location.put("bearing", l.getBearing());
             location.put("altitude", l.getAltitude());
             location.put("recorded_at", dao.dateToString(l.getRecordedAt()));
+
+            EventBus.getDefault().post(location);
+
             params.put("location", location);
 
             Log.i(TAG, "location: " + location.toString());
