@@ -81,7 +81,7 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
             isEnabled = false;
             result = true;
             activity.stopService(updateServiceIntent);
-            this.callback = null;
+            callbackContext.success();
             
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             result = true;
@@ -106,7 +106,7 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
         } else if (ACTION_SET_CONFIG.equalsIgnoreCase(action)) {
             result = true;
             // TODO reconfigure Service
-            //callback.success();
+            callback.success();
         }
 
         return result;
