@@ -426,11 +426,13 @@ public class LocationUpdateService extends Service implements LocationListener {
             loc.put("bearing", location.getBearing());
             loc.put("altitude", location.getAltitude());
             // loc.put("recorded_at", location.getRecordedAt().getTime());
+
+            EventBus.getDefault().post(loc);
+
         }catch(JSONException e){
             Log.e(TAG, "could not parse location");
-        }
-                                     
-        EventBus.getDefault().post(loc);
+        }                            
+        
 
         // persistLocation(location);
 
