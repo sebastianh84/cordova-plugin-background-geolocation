@@ -417,6 +417,7 @@ public class LocationUpdateService extends Service implements LocationListener {
 
         // NOTE - we do not want to store the location nor post it to server
         // instead send it via bus to activity
+        try{
         JSONObject loc = new JSONObject();
             loc.put("latitude", location.getLatitude());
             loc.put("longitude", location.getLongitude());
@@ -425,7 +426,10 @@ public class LocationUpdateService extends Service implements LocationListener {
             loc.put("bearing", location.getBearing());
             loc.put("altitude", location.getAltitude());
             // loc.put("recorded_at", location.getRecordedAt().getTime());
-            //                          
+        }catch(JSONException e){
+            Log.e(TAG, "could not parse location");
+        }
+                                     
         EventBus.getDefault().post(loc);
 
         // persistLocation(location);
