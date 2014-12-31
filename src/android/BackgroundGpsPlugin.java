@@ -2,6 +2,7 @@ package com.tenforwardconsulting.cordova.bgloc;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -119,6 +120,8 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
 
     public void onEventMainThread(JSONObject loc){
         Log.d("BUS",loc.toString());
-        callback.success(loc);
+        PluginResult result = new PluginResult(PluginResult.Status.OK, loc);
+        result.setKeepCallback(true);
+        callback.sendPluginResult(result);
     }
 }
