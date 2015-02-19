@@ -3,17 +3,8 @@ package com.tenforwardconsulting.cordova.bgloc;
 import de.greenrobot.event.EventBus;
 
 import java.util.List;
-import java.util.Iterator;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.tenforwardconsulting.cordova.bgloc.data.DAOFactory;
-import com.tenforwardconsulting.cordova.bgloc.data.LocationDAO;
 
 import android.annotation.TargetApi;
 
@@ -42,14 +33,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.SystemClock;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -104,7 +92,6 @@ public class LocationUpdateService extends Service implements LocationListener {
 
     private LocationManager locationManager;
     private AlarmManager alarmManager;
-    private ConnectivityManager connectivityManager;
     private NotificationManager notificationManager;
     public static TelephonyManager telephonyManager = null;
 
@@ -123,7 +110,6 @@ public class LocationUpdateService extends Service implements LocationListener {
         locationManager         = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         alarmManager            = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         toneGenerator           = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
-        connectivityManager     = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         notificationManager     = (NotificationManager)this.getSystemService(Context.NOTIFICATION_SERVICE);
         telephonyManager        = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -433,16 +419,6 @@ public class LocationUpdateService extends Service implements LocationListener {
         }catch(JSONException e){
             Log.e(TAG, "could not parse location");
         }                            
-        
-
-        // persistLocation(location);
-
-        // if (this.isNetworkConnected()) {
-        //     Log.d(TAG, "Scheduling location network post");
-        //     schedulePostLocations();
-        // } else {
-        //     Log.d(TAG, "Network unavailable, waiting for now");
-        // }
     }
 
     /**
@@ -663,92 +639,7 @@ public class LocationUpdateService extends Service implements LocationListener {
         // TODO Auto-generated method stub
         Log.d(TAG, "- onStatusChanged: " + provider + ", status: " + status);
     }
-    private void schedulePostLocations() {
-        PostLocationTask task = new LocationUpdateService.PostLocationTask();
-        Log.d(TAG, "beforeexecute " +  task.getStatus());
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        else
-            task.execute();
-        Log.d(TAG, "afterexecute " +  task.getStatus());
-    }
-
-    private boolean postLocation(com.tenforwardconsulting.cordova.bgloc.data.Location l, LocationDAO dao) {
-        if (l == null) {
-            Log.w(TAG, "postLocation: null location");
-            return false;
-        }
-        try {
-            lastUpdateTime = SystemClock.elapsedRealtime();
-            Log.i(TAG, "Posting  native location update: " + l);
-            DefaultHttpClient httpClient = new DefaultHttpClient();
-            HttpPost request = new HttpPost(url);
-
-            JSONObject location = new JSONObject();
-            location.put("latitude", l.getLatitude());
-            location.put("longitude", l.getLongitude());
-            location.put("accuracy", l.getAccuracy());
-            location.put("speed", l.getSpeed());
-            location.put("bearing", l.getBearing());
-            location.put("altitude", l.getAltitude());
-            location.put("recorded_at", dao.dateToString(l.getRecordedAt()));
-
-            EventBus.getDefault().post(location);
-
-            params.put("location", location);
-
-            Log.i(TAG, "location: " + location.toString());
-
-            StringEntity se = new StringEntity(params.toString());
-            request.setEntity(se);
-            request.setHeader("Accept", "application/json");
-            request.setHeader("Content-type", "application/json");
-
-            Iterator<String> headkeys = headers.keys();
-            while( headkeys.hasNext() ){
-        String headkey = headkeys.next();
-        if(headkey != null) {
-                    Log.d(TAG, "Adding Header: " + headkey + " : " + (String)headers.getString(headkey));
-                    request.setHeader(headkey, (String)headers.getString(headkey));
-        }
-            }
-            Log.d(TAG, "Posting to " + request.getURI().toString());
-            HttpResponse response = httpClient.execute(request);
-            Log.i(TAG, "Response received: " + response.getStatusLine());
-            if (response.getStatusLine().getStatusCode() == 200) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Throwable e) {
-            Log.w(TAG, "Exception posting location: " + e);
-            e.printStackTrace();
-            return false;
-        }
-    }
-    private void persistLocation(Location location) {
-        LocationDAO dao = DAOFactory.createLocationDAO(this.getApplicationContext());
-        com.tenforwardconsulting.cordova.bgloc.data.Location savedLocation = com.tenforwardconsulting.cordova.bgloc.data.Location.fromAndroidLocation(location);
-
-        if (dao.persistLocation(savedLocation)) {
-            Log.d(TAG, "Persisted Location: " + savedLocation);
-        } else {
-            Log.w(TAG, "Failed to persist location");
-        }
-    }
-
-    private boolean isNetworkConnected() {
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (networkInfo != null) {
-            Log.d(TAG, "Network found, type = " + networkInfo.getTypeName());
-            return networkInfo.isConnected();
-        } else {
-            Log.d(TAG, "No active network info");
-            return false;
-        }
-    }
-
+    
     @Override
     public void onDestroy() {
         Log.w(TAG, "------------------------------------------ Destroyed Location update Service");
@@ -782,25 +673,5 @@ public class LocationUpdateService extends Service implements LocationListener {
     public void onTaskRemoved(Intent rootIntent) {
         this.stopSelf();
         super.onTaskRemoved(rootIntent);
-    }
-
-    private class PostLocationTask extends AsyncTask<Object, Integer, Boolean> {
-
-        @Override
-        protected Boolean doInBackground(Object...objects) {
-            Log.d(TAG, "Executing PostLocationTask#doInBackground");
-            LocationDAO locationDAO = DAOFactory.createLocationDAO(LocationUpdateService.this.getApplicationContext());
-            for (com.tenforwardconsulting.cordova.bgloc.data.Location savedLocation : locationDAO.getAllLocations()) {
-                Log.d(TAG, "Posting saved location");
-                if (postLocation(savedLocation, locationDAO)) {
-                    locationDAO.deleteLocation(savedLocation);
-                }
-            }
-            return true;
-        }
-        @Override
-        protected void onPostExecute(Boolean result) {
-            Log.d(TAG, "PostLocationTask#onPostExecture");
-        }
     }
 }

@@ -10,9 +10,7 @@ import de.greenrobot.event.EventBus;
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.location.LocationManager;
 import android.util.Log;
 
 public class BackgroundGpsPlugin extends CordovaPlugin {
@@ -38,7 +36,9 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
     private String notificationTitle = "Background tracking";
     private String notificationText = "ENABLED";
     private String stopOnTerminate = "false";
-
+    
+    private CallbackContext callback;
+    
     @Override
     protected void pluginInitialize() {
         Log.d("BUS","registering");
