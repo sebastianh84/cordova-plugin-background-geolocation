@@ -25,9 +25,6 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
 
     private Boolean isEnabled = false;
 
-    private String url;
-    private String params;
-    private String headers;
     private String stationaryRadius = "30";
     private String desiredAccuracy = "100";
     private String distanceFilter = "30";
@@ -53,27 +50,19 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
 
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
             result = true;
-            if (params == null || headers == null || url == null) {
-                callbackContext.error("Call configure before calling start");
-            } else {
-                // callbackContext.success();
+            
+            updateServiceIntent.putExtra("stationaryRadius", stationaryRadius);
+            updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
+            updateServiceIntent.putExtra("distanceFilter", distanceFilter);
+            updateServiceIntent.putExtra("locationTimeout", locationTimeout);
+            updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
+            updateServiceIntent.putExtra("isDebugging", isDebugging);
+            updateServiceIntent.putExtra("notificationTitle", notificationTitle);
+            updateServiceIntent.putExtra("notificationText", notificationText);
+            updateServiceIntent.putExtra("stopOnTerminate", stopOnTerminate);
 
-                updateServiceIntent.putExtra("url", url);
-                updateServiceIntent.putExtra("params", params);
-                updateServiceIntent.putExtra("headers", headers);
-                updateServiceIntent.putExtra("stationaryRadius", stationaryRadius);
-                updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
-                updateServiceIntent.putExtra("distanceFilter", distanceFilter);
-                updateServiceIntent.putExtra("locationTimeout", locationTimeout);
-                updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
-                updateServiceIntent.putExtra("isDebugging", isDebugging);
-                updateServiceIntent.putExtra("notificationTitle", notificationTitle);
-                updateServiceIntent.putExtra("notificationText", notificationText);
-                updateServiceIntent.putExtra("stopOnTerminate", stopOnTerminate);
-
-                activity.startService(updateServiceIntent);
-                isEnabled = true;
-            }
+            activity.startService(updateServiceIntent);
+            isEnabled = true;
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
             isEnabled = false;
             result = true;
@@ -83,28 +72,27 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             result = true;
             try {
-                // Params.
-                //    0       1       2           3               4                5               6            7           8                9               10              11
-                //[params, headers, url, stationaryRadius, distanceFilter, locationTimeout, desiredAccuracy, debug, notificationTitle, notificationText, activityType, stopOnTerminate]
-                this.params = data.getString(0);
-                this.headers = data.getString(1);
-                this.url = data.getString(2);
-                this.stationaryRadius = data.getString(3);
-                this.distanceFilter = data.getString(4);
-                this.locationTimeout = data.getString(5);
-                this.desiredAccuracy = data.getString(6);
-                this.isDebugging = data.getString(7);
-                this.notificationTitle = data.getString(8);
-                this.notificationText = data.getString(9);
-                this.stopOnTerminate = data.getString(11);
+                JSONObject config = data.getJSONObject(0);
+                
+                Log.i(TAG, "CONFIGURE: " + config.toString());
+
+                this.stationaryRadius   = config.getString("stationaryRadius");
+                this.distanceFilter     = config.getString("distanceFilter");
+                this.locationTimeout    = config.getString("locationTimeout");
+                this.desiredAccuracy    = config.getString("desiredAccuracy");
+                this.isDebugging        = config.getString("debug");
+                this.notificationTitle  = config.getString("notificationTitle");
+                this.notificationText   = config.getString("notificationText");
+                this.stopOnTerminate    = config.getString("stopOnTerminate");
+                
                 this.callback = callbackContext;
             } catch (JSONException e) {
-                callbackContext.error("authToken/url required as parameters: " + e.getMessage());
+                callbackContext.error("Configuration error " + e.getMessage());
             }
         } else if (ACTION_SET_CONFIG.equalsIgnoreCase(action)) {
             result = true;
             // TODO reconfigure Service
-            callback.success();
+            callbackContext.success();
         }
 
         return result;
@@ -123,7 +111,7 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
     }
 
     public void onEventMainThread(JSONObject loc){
-        Log.d("BUS received : ",loc.toString());
+        Log.i(TAG, "BUS received : " + loc.toString());
         PluginResult result = new PluginResult(PluginResult.Status.OK, loc);
         result.setKeepCallback(true);
         if(callback != null){

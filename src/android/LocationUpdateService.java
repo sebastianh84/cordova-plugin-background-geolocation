@@ -152,22 +152,14 @@ public class LocationUpdateService extends Service implements LocationListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Received start id " + startId + ": " + intent);
         if (intent != null) {
-            try {
-                params = new JSONObject(intent.getStringExtra("params"));
-                headers = new JSONObject(intent.getStringExtra("headers"));
-            } catch (JSONException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            url = intent.getStringExtra("url");
-            stationaryRadius = Float.parseFloat(intent.getStringExtra("stationaryRadius"));
-            distanceFilter = Integer.parseInt(intent.getStringExtra("distanceFilter"));
-            scaledDistanceFilter = distanceFilter;
-            desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
-            locationTimeout = Integer.parseInt(intent.getStringExtra("locationTimeout"));
-            isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
-            notificationTitle = intent.getStringExtra("notificationTitle");
-            notificationText = intent.getStringExtra("notificationText");
+            stationaryRadius        = Float.parseFloat(intent.getStringExtra("stationaryRadius"));
+            distanceFilter          = Integer.parseInt(intent.getStringExtra("distanceFilter"));
+            scaledDistanceFilter    = distanceFilter;
+            desiredAccuracy         = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
+            locationTimeout         = Integer.parseInt(intent.getStringExtra("locationTimeout"));
+            isDebugging             = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
+            notificationTitle       = intent.getStringExtra("notificationTitle");
+            notificationText        = intent.getStringExtra("notificationText");
 
             // Build a Notification required for running service in foreground.
             Intent main = new Intent(this, BackgroundGpsPlugin.class);
@@ -188,9 +180,6 @@ public class LocationUpdateService extends Service implements LocationListener {
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
             startForeground(startId, notification);
         }
-        Log.i(TAG, "- url: " + url);
-        Log.i(TAG, "- params: " + params.toString());
-        Log.i(TAG, "- headers: " + headers.toString());
         Log.i(TAG, "- stationaryRadius: "   + stationaryRadius);
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
         Log.i(TAG, "- desiredAccuracy: "    + desiredAccuracy);
@@ -401,24 +390,22 @@ public class LocationUpdateService extends Service implements LocationListener {
         // Go ahead and cache, push to server
         lastLocation = location;
 
-        // NOTE - we do not want to store the location nor post it to server
-        // instead send it via bus to activity
         try{
-        JSONObject loc = new JSONObject();
+            JSONObject loc = new JSONObject();
             loc.put("latitude", location.getLatitude());
             loc.put("longitude", location.getLongitude());
             loc.put("accuracy", location.getAccuracy());
             loc.put("speed", location.getSpeed());
             loc.put("bearing", location.getBearing());
             loc.put("altitude", location.getAltitude());
-            // loc.put("recorded_at", location.getRecordedAt().getTime());
+            loc.put("timestamp", location.getTime());
 
             EventBus.getDefault().post(loc);
             Log.d(TAG, "posting to bus");
 
-        }catch(JSONException e){
+        } catch(JSONException e){
             Log.e(TAG, "could not parse location");
-        }                            
+        }
     }
 
     /**
@@ -493,7 +480,7 @@ public class LocationUpdateService extends Service implements LocationListener {
         if (isDebugging) {
             startTone("beep");
         }
-    float distance = abs(location.distanceTo(stationaryLocation) - stationaryLocation.getAccuracy() - location.getAccuracy());
+        float distance = abs(location.distanceTo(stationaryLocation) - stationaryLocation.getAccuracy() - location.getAccuracy());
 
         if (isDebugging) {
             Toast.makeText(this, "Stationary exit in " + (stationaryRadius-distance) + "m", Toast.LENGTH_LONG).show();
@@ -642,7 +629,7 @@ public class LocationUpdateService extends Service implements LocationListener {
     
     @Override
     public void onDestroy() {
-        Log.w(TAG, "------------------------------------------ Destroyed Location update Service");
+        Log.w(TAG, "- Destroyed Location update Service");
         cleanUp();
         super.onDestroy();
     }

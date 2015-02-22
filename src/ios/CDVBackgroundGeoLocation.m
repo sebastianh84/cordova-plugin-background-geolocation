@@ -100,22 +100,15 @@
  */
 - (void) configure:(CDVInvokedUrlCommand*)command
 {
-    // in iOS, we call to javascript for HTTP now so token and url should be @deprecated until Android calls out to javascript.
-    // Params.
-    //    0       1       2           3               4                5               6            7           8                9               10               11
-    //[params, headers, url, stationaryRadius, distanceFilter, locationTimeout, desiredAccuracy, debug, notificationTitle, notificationText, activityType, stopOnTerminate]
-
-    // UNUSED ANDROID VARS
-    //params = [command.arguments objectAtIndex: 0];
-    //headers = [command.arguments objectAtIndex: 1];
-    //url = [command.arguments objectAtIndex: 2];
-    stationaryRadius    = [[command.arguments objectAtIndex: 3] intValue];
-    distanceFilter      = [[command.arguments objectAtIndex: 4] intValue];
-    locationTimeout     = [[command.arguments objectAtIndex: 5] intValue];
-    desiredAccuracy     = [self decodeDesiredAccuracy:[[command.arguments objectAtIndex: 6] intValue]];
-    isDebugging         = [[command.arguments objectAtIndex: 7] boolValue];
-    activityType        = [self decodeActivityType:[command.arguments objectAtIndex:10]];
-    stopOnTerminate     = [[command.arguments objectAtIndex: 11] boolValue];
+    NSDictionary *config = [command.arguments objectAtIndex:0];
+    
+    stationaryRadius    = [[config objectForKey:@"stationaryRadius"] intValue];
+    distanceFilter      = [[config objectForKey:@"distanceFilter"] intValue];
+    locationTimeout     = [[config objectForKey:@"locationTimeout"] intValue];
+    desiredAccuracy     = [self decodeDesiredAccuracy:[[config objectForKey:@"desiredAccuracy"] intValue]];
+    isDebugging         = [[config objectForKey:@"debug"] boolValue];
+    activityType        = [self decodeActivityType:[config objectForKey:@"activityType"]];
+    stopOnTerminate     = [[config objectForKey:@"stopOnTerminate"] boolValue];
 
     self.syncCallbackId = command.callbackId;
 
@@ -125,13 +118,11 @@
     locationManager.desiredAccuracy = desiredAccuracy;
     
     NSLog(@"CDVBackgroundGeoLocation configure");
-    NSLog(@"  - token: %@", token);
-    NSLog(@"  - url: %@", url);
     NSLog(@"  - distanceFilter: %ld", (long)distanceFilter);
     NSLog(@"  - stationaryRadius: %ld", (long)stationaryRadius);
     NSLog(@"  - locationTimeout: %ld", (long)locationTimeout);
     NSLog(@"  - desiredAccuracy: %ld", (long)desiredAccuracy);
-    NSLog(@"  - activityType: %@", [command.arguments objectAtIndex:7]);
+    NSLog(@"  - activityType: %@", [config objectForKey:@"activityType"]);
     NSLog(@"  - debug: %d", isDebugging);
     NSLog(@"  - stopOnTerminate: %d", stopOnTerminate);
     

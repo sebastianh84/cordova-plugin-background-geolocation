@@ -16,6 +16,9 @@
     <dependency id="org.apache.cordova.geolocation" />
     <dependency id="org.apache.cordova.dialogs" />
 
+    <dependency id="com.google.playservices" url="https://github.com/MobileChromeApps/google-play-services.git" />
+
+
     <js-module src="www/BackgroundGeoLocation.js" name="BackgroundGeoLocation">
         <clobbers target="plugins.backgroundGeoLocation" />
     </js-module>
